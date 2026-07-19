@@ -35,18 +35,21 @@ module.exports = {
         // --------------------------------------------------
 
         bot.on("resourcePack", (url, hash) => {
-            this.section("Resource Pack");
-            this.log("Request received");
-            this.log("URL: " + url);
-            this.log("Hash: " + hash);
+    this.section("Resource Pack");
+    this.log("Request received");
+    this.log("URL: " + url);
+    this.log("Hash: " + hash);
 
-            try {
-                this.log("Rejecting resource pack...");
-                bot.declineResourcePack();
-            } catch (e) {
-                this.log("Resource pack reject failed: " + e.message);
-            }
+    try {
+        this.log("Rejecting resource pack (protocol packet)");
+        bot._client.write('resource_pack_receive', {
+            result: 1 // 1 = declined
         });
+    } catch (e) {
+        this.log("Resource pack reject failed: " + e.message);
+    }
+});
+
 
         // --------------------------------------------------
         // Extra resource pack packet logging
