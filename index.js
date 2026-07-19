@@ -135,3 +135,4 @@ function createBot() {
 // --------------------------------------------------
 
 createBot();
+module.exports = { createBot };
