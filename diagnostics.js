@@ -1,5 +1,5 @@
 // ==================================================
-// diagnostics.js — Deep protocol + socket logging
+// diagnostics.js — Compact Deep Logging
 // ==================================================
 
 module.exports = {
@@ -20,10 +20,7 @@ module.exports = {
     },
 
     attachBot(bot) {
-        // --------------------------------------------------
         // Basic connection stages
-        // --------------------------------------------------
-
         bot.on("connect", () => this.log("[Stage] TCP connected"));
         bot.on("inject_allowed", () => this.log("[Stage] Protocol injected"));
         bot.on("login", () => this.log("[Stage] Login packet received"));
@@ -31,46 +28,31 @@ module.exports = {
         bot.on("respawn", () => this.log("[Stage] Respawn event fired"));
 
         // --------------------------------------------------
-        // Resource pack diagnostics (REJECT PACK)
+        // Resource pack REJECTION (correct protocol packet)
         // --------------------------------------------------
 
         bot.on("resourcePack", (url, hash) => {
-    this.section("Resource Pack");
-    this.log("Request received");
-    this.log("URL: " + url);
-    this.log("Hash: " + hash);
+            this.section("Resource Pack");
+            this.log("Request received");
+            this.log("URL: " + url);
+            this.log("Hash: " + hash);
 
-    try {
-        this.log("Rejecting resource pack (protocol packet)");
-        bot._client.write('resource_pack_receive', {
-            result: 1 // 1 = declined
-        });
-    } catch (e) {
-        this.log("Resource pack reject failed: " + e.message);
-    }
-});
-
-
-        // --------------------------------------------------
-        // Extra resource pack packet logging
-        // --------------------------------------------------
-
-        const client = bot._client;
-        if (!client) return;
-
-        client.on("resource_pack_send", packet => {
-            this.log("[Packet] resource_pack_send");
-            console.log(packet);
-        });
-
-        client.on("resource_pack_receive", packet => {
-            this.log("[Packet] resource_pack_receive");
-            console.log(packet);
+            try {
+                this.log("Rejecting resource pack (protocol packet)");
+                bot._client.write('resource_pack_receive', {
+                    result: 1 // 1 = declined
+                });
+            } catch (e) {
+                this.log("Resource pack reject failed: " + e.message);
+            }
         });
 
         // --------------------------------------------------
         // Deep protocol logging
         // --------------------------------------------------
+
+        const client = bot._client;
+        if (!client) return;
 
         client.on("packet", (data, meta) => {
             const important = [
@@ -90,6 +72,16 @@ module.exports = {
             }
         });
 
+        client.on("resource_pack_send", packet => {
+            this.log("[Packet] resource_pack_send");
+            console.log(packet);
+        });
+
+        client.on("resource_pack_receive", packet => {
+            this.log("[Packet] resource_pack_receive");
+            console.log(packet);
+        });
+
         client.on("success", () => {
             this.log("[Protocol] Login success packet received");
         });
@@ -99,10 +91,7 @@ module.exports = {
             console.log(packet);
         });
 
-        // --------------------------------------------------
         // Socket diagnostics
-        // --------------------------------------------------
-
         if (client.socket) {
             client.socket.on("timeout", () => this.log("[Socket] Timeout"));
             client.socket.on("close", hadError => this.log(`[Socket] Closed (hadError=${hadError})`));
@@ -110,3 +99,4 @@ module.exports = {
         }
     }
 };
+
