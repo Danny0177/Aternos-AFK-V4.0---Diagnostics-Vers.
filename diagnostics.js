@@ -1,5 +1,5 @@
 // ==================================================
-// diagnostics.js — Correct CONFIGURATION timing with registry end detection
+// diagnostics.js — Quiet‑Period Registry Detection
 // ==================================================
 
 module.exports = {
@@ -37,10 +37,16 @@ module.exports = {
         const client = bot._client;
         if (!client) return;
 
+        // CONFIGURATION STATE TRACKING
+        let registryCount = 0;
+        let lastRegistryTime = 0;
         let registryDone = false;
+
         let featureFlagsDone = false;
         let dataPacksDone = false;
         let configFinished = false;
+
+        const QUIET_PERIOD_MS = 500;
 
         client.on("packet", (data, meta) => {
             const important = [
@@ -63,33 +69,57 @@ module.exports = {
                 this.log(`[Packet] ${meta.name}`);
             }
 
-            // registry_data packets
-            if (meta.name === "registry_data") {
-                this.log("[Config] registry_data received");
+            // --------------------------------------------------
+            // registry_data — count packets + quiet period detection
+            // --------------------------------------------------
 
-                if (data.last) {
-                    registryDone = true;
-                    this.log("[Config] registry_data sequence complete (last=true)");
-                }
+            if (meta.name === "registry_data") {
+                registryCount++;
+                lastRegistryTime = Date.now();
+                this.log(`[Config] registry_data received (${registryCount})`);
             }
 
+            // --------------------------------------------------
             // feature_flags
+            // --------------------------------------------------
+
             if (meta.name === "feature_flags") {
                 featureFlagsDone = true;
                 this.log("[Config] feature_flags received");
             }
 
+            // --------------------------------------------------
             // data_packs
+            // --------------------------------------------------
+
             if (meta.name === "data_packs") {
                 dataPacksDone = true;
                 this.log("[Config] data_packs received");
             }
 
-            // Only send finish_configuration when ALL config packets are done
+            // --------------------------------------------------
+            // Quiet‑period registry completion detection
+            // --------------------------------------------------
+
+            if (!registryDone && registryCount > 0) {
+                const now = Date.now();
+                const elapsed = now - lastRegistryTime;
+
+                if (elapsed > QUIET_PERIOD_MS) {
+                    registryDone = true;
+                    this.section("Registry Sync Complete");
+                    this.log(`Quiet period detected (${elapsed}ms). Registry sync finished.`);
+                }
+            }
+
+            // --------------------------------------------------
+            // Send finish_configuration ONLY when everything is done
+            // --------------------------------------------------
+
             if (!configFinished && registryDone && featureFlagsDone && dataPacksDone) {
                 this.section("Configuration Complete");
                 this.log("All configuration packets received");
-                this.log("Sending finish_configuration (correct timing)");
+                this.log("Sending finish_configuration (quiet‑period timing)");
 
                 try {
                     client.write("finish_configuration", {});
