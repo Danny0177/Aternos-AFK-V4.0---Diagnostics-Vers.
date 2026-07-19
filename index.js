@@ -100,4 +100,38 @@ function createBot() {
         }, settings.activity.interval || 300000);
     });
 
-    // ------------------------------------------------
+    // --------------------------------------------------
+    // Disconnects
+    // --------------------------------------------------
+
+    bot.on("end", reason => {
+        clearTimeout(spawnTimeout);
+        clearInterval(activityInterval);
+
+        Diagnostics.section("End Event");
+        Diagnostics.log("Connection ended: " + reason);
+
+        ReconnectController.schedule("end event");
+    });
+
+    bot.on("kicked", reason => {
+        Diagnostics.section("Kicked");
+        Diagnostics.log("Server kicked the bot:");
+        console.log(reason);
+    });
+
+    bot.on("error", err => {
+        Diagnostics.section("Error");
+        Diagnostics.log("Error: " + err.message);
+
+        ReconnectController.schedule("error");
+    });
+}
+
+// --------------------------------------------------
+// Start bot
+// --------------------------------------------------
+
+createBot();
+
+module.exports = { createBot };
