@@ -1,5 +1,5 @@
 // ==================================================
-// diagnostics.js — Safe for 1.20+ CONFIGURATION state
+// diagnostics.js — Direct CONFIGURATION detection
 // ==================================================
 
 module.exports = {
@@ -43,28 +43,13 @@ module.exports = {
         });
 
         // --------------------------------------------------
-        // CONFIGURATION STATE HANDLING (Option A)
-        // --------------------------------------------------
-
-        bot.on("config", () => {
-            this.section("Configuration State");
-            this.log("Server entered CONFIGURATION state");
-            this.log("Sending finish_configuration immediately (Option A)");
-
-            try {
-                bot._client.write("finish_configuration", {});
-                this.log("[Config] finish_configuration sent");
-            } catch (e) {
-                this.log("[Config] Failed to send finish_configuration: " + e.message);
-            }
-        });
-
-        // --------------------------------------------------
-        // Deep protocol logging
+        // Direct CONFIGURATION detection + finish_configuration
         // --------------------------------------------------
 
         const client = bot._client;
         if (!client) return;
+
+        let configFinished = false;
 
         client.on("packet", (data, meta) => {
             const important = [
@@ -85,6 +70,25 @@ module.exports = {
 
             if (important.includes(meta.name)) {
                 this.log(`[Packet] ${meta.name}`);
+            }
+
+            // Detect CONFIGURATION state packets
+            if (!configFinished && (
+                meta.name === "registry_data" ||
+                meta.name === "feature_flags" ||
+                meta.name === "data_packs"
+            )) {
+                this.section("Configuration Detected");
+                this.log("Configuration packets received (" + meta.name + ")");
+                this.log("Sending finish_configuration immediately (direct detection)");
+
+                try {
+                    client.write("finish_configuration", {});
+                    configFinished = true;
+                    this.log("[Config] finish_configuration sent");
+                } catch (e) {
+                    this.log("[Config] Failed to send finish_configuration: " + e.message);
+                }
             }
         });
 
