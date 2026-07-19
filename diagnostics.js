@@ -1,5 +1,5 @@
 // ==================================================
-// diagnostics.js — Correct CONFIGURATION timing (Option B)
+// diagnostics.js — Correct CONFIGURATION timing with registry end detection
 // ==================================================
 
 module.exports = {
@@ -37,9 +37,9 @@ module.exports = {
         const client = bot._client;
         if (!client) return;
 
-        let gotRegistry = false;
-        let gotFeatureFlags = false;
-        let gotDataPacks = false;
+        let registryDone = false;
+        let featureFlagsDone = false;
+        let dataPacksDone = false;
         let configFinished = false;
 
         client.on("packet", (data, meta) => {
@@ -63,23 +63,30 @@ module.exports = {
                 this.log(`[Packet] ${meta.name}`);
             }
 
+            // registry_data packets
             if (meta.name === "registry_data") {
-                gotRegistry = true;
                 this.log("[Config] registry_data received");
+
+                if (data.last) {
+                    registryDone = true;
+                    this.log("[Config] registry_data sequence complete (last=true)");
+                }
             }
 
+            // feature_flags
             if (meta.name === "feature_flags") {
-                gotFeatureFlags = true;
+                featureFlagsDone = true;
                 this.log("[Config] feature_flags received");
             }
 
+            // data_packs
             if (meta.name === "data_packs") {
-                gotDataPacks = true;
+                dataPacksDone = true;
                 this.log("[Config] data_packs received");
             }
 
             // Only send finish_configuration when ALL config packets are done
-            if (!configFinished && gotRegistry && gotFeatureFlags && gotDataPacks) {
+            if (!configFinished && registryDone && featureFlagsDone && dataPacksDone) {
                 this.section("Configuration Complete");
                 this.log("All configuration packets received");
                 this.log("Sending finish_configuration (correct timing)");
