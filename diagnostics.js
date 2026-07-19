@@ -1,5 +1,5 @@
 // ==================================================
-// diagnostics.js — Compact Deep Logging
+// diagnostics.js — Safe for 1.20+ CONFIGURATION state
 // ==================================================
 
 module.exports = {
@@ -28,7 +28,7 @@ module.exports = {
         bot.on("respawn", () => this.log("[Stage] Respawn event fired"));
 
         // --------------------------------------------------
-        // Resource pack REJECTION (correct protocol packet)
+        // Resource pack logging ONLY — no accept/reject
         // --------------------------------------------------
 
         bot.on("resourcePack", (url, hash) => {
@@ -36,15 +36,7 @@ module.exports = {
             this.log("Request received");
             this.log("URL: " + url);
             this.log("Hash: " + hash);
-
-            try {
-                this.log("Rejecting resource pack (protocol packet)");
-                bot._client.write('resource_pack_receive', {
-                    result: 1 // 1 = declined
-                });
-            } catch (e) {
-                this.log("Resource pack reject failed: " + e.message);
-            }
+            this.log("NOTE: No accept/reject sent (safe mode for 1.20+)");
         });
 
         // --------------------------------------------------
@@ -72,16 +64,6 @@ module.exports = {
             }
         });
 
-        client.on("resource_pack_send", packet => {
-            this.log("[Packet] resource_pack_send");
-            console.log(packet);
-        });
-
-        client.on("resource_pack_receive", packet => {
-            this.log("[Packet] resource_pack_receive");
-            console.log(packet);
-        });
-
         client.on("success", () => {
             this.log("[Protocol] Login success packet received");
         });
@@ -99,4 +81,5 @@ module.exports = {
         }
     }
 };
+
 
