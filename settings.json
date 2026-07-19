@@ -1,0 +1,28 @@
+{
+  "server": {
+    "host": "leaked.aternos.me",
+    "port": 48035,
+    "version": "1.21.11"
+  },
+
+  "account": {
+    "username": "AFK-V15",
+    "type": "offline"
+  },
+
+  "resourcePack": {
+    "accept": true
+  },
+
+  "activity": {
+    "enabled": true,
+    "interval": 60000
+  },
+
+  "reconnect": {
+    "initialDelay": 10000,
+    "maxDelay": 60000
+  },
+
+  "loginCommand": ""
+}
