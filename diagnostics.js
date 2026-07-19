@@ -20,7 +20,10 @@ module.exports = {
     },
 
     attachBot(bot) {
+        // --------------------------------------------------
         // Basic connection stages
+        // --------------------------------------------------
+
         bot.on("connect", () => this.log("[Stage] TCP connected"));
         bot.on("inject_allowed", () => this.log("[Stage] Protocol injected"));
         bot.on("login", () => this.log("[Stage] Login packet received"));
@@ -40,6 +43,23 @@ module.exports = {
         });
 
         // --------------------------------------------------
+        // CONFIGURATION STATE HANDLING (Option A)
+        // --------------------------------------------------
+
+        bot.on("config", () => {
+            this.section("Configuration State");
+            this.log("Server entered CONFIGURATION state");
+            this.log("Sending finish_configuration immediately (Option A)");
+
+            try {
+                bot._client.write("finish_configuration", {});
+                this.log("[Config] finish_configuration sent");
+            } catch (e) {
+                this.log("[Config] Failed to send finish_configuration: " + e.message);
+            }
+        });
+
+        // --------------------------------------------------
         // Deep protocol logging
         // --------------------------------------------------
 
@@ -56,7 +76,11 @@ module.exports = {
                 "resource_pack_send",
                 "resource_pack",
                 "custom_payload",
-                "plugin_message"
+                "plugin_message",
+                "registry_data",
+                "feature_flags",
+                "data_packs",
+                "finish_configuration"
             ];
 
             if (important.includes(meta.name)) {
@@ -73,7 +97,10 @@ module.exports = {
             console.log(packet);
         });
 
+        // --------------------------------------------------
         // Socket diagnostics
+        // --------------------------------------------------
+
         if (client.socket) {
             client.socket.on("timeout", () => this.log("[Socket] Timeout"));
             client.socket.on("close", hadError => this.log(`[Socket] Closed (hadError=${hadError})`));
@@ -81,5 +108,3 @@ module.exports = {
         }
     }
 };
-
-
