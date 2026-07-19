@@ -84,3 +84,57 @@ function createBot() {
             setTimeout(() => {
                 try {
                     Diagnostics.log("Sending login command");
+                    bot.chat(settings.loginCommand);
+                } catch (e) {
+                    Diagnostics.log("Login command failed: " + e.message);
+                }
+            }, 3000);
+        }
+
+        // Anti-idle heartbeat
+        activityInterval = setInterval(() => {
+            try {
+                bot.look(bot.entity.yaw + 0.05, bot.entity.pitch, true);
+                Diagnostics.log("Heartbeat tick");
+            } catch (e) {
+                Diagnostics.log("Heartbeat failed: " + e.message);
+            }
+        }, settings.activity.interval || 300000);
+    });
+
+    // --------------------------------------------------
+    // Disconnects
+    // --------------------------------------------------
+
+    bot.on("end", reason => {
+        clearTimeout(spawnTimeout);
+        clearInterval(activityInterval);
+
+        Diagnostics.section("End Event");
+        Diagnostics.log("Connection ended: " + reason);
+
+        ReconnectController.schedule("end event");
+    });
+
+    bot.on("kicked", reason => {
+        Diagnostics.section("Kicked");
+        Diagnostics.log("Server kicked the bot:");
+        console.log(reason);
+    });
+
+    bot.on("error", err => {
+        Diagnostics.section("Error");
+        Diagnostics.log("Error: " + err.message);
+
+        ReconnectController.schedule("error");
+    });
+}
+
+// --------------------------------------------------
+// Start bot
+// --------------------------------------------------
+
+createBot();
+
+// Export for reconnect.js
+module.exports = { createBot };
