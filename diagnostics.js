@@ -31,7 +31,7 @@ module.exports = {
         bot.on("respawn", () => this.log("[Stage] Respawn event fired"));
 
         // --------------------------------------------------
-        // Resource pack diagnostics
+        // Resource pack diagnostics (REJECT PACK)
         // --------------------------------------------------
 
         bot.on("resourcePack", (url, hash) => {
@@ -41,19 +41,33 @@ module.exports = {
             this.log("Hash: " + hash);
 
             try {
-                this.log("Accepting resource pack...");
-                bot.acceptResourcePack();
+                this.log("Rejecting resource pack...");
+                bot.declineResourcePack();
             } catch (e) {
-                this.log("Resource pack accept failed: " + e.message);
+                this.log("Resource pack reject failed: " + e.message);
             }
+        });
+
+        // --------------------------------------------------
+        // Extra resource pack packet logging
+        // --------------------------------------------------
+
+        const client = bot._client;
+        if (!client) return;
+
+        client.on("resource_pack_send", packet => {
+            this.log("[Packet] resource_pack_send");
+            console.log(packet);
+        });
+
+        client.on("resource_pack_receive", packet => {
+            this.log("[Packet] resource_pack_receive");
+            console.log(packet);
         });
 
         // --------------------------------------------------
         // Deep protocol logging
         // --------------------------------------------------
-
-        const client = bot._client;
-        if (!client) return;
 
         client.on("packet", (data, meta) => {
             const important = [
@@ -93,4 +107,3 @@ module.exports = {
         }
     }
 };
-
