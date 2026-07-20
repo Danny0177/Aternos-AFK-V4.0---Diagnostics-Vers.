@@ -19,11 +19,12 @@ function createBot() {
     console.log("==================================================");
 
     bot = mineflayer.createBot({
-        host: settings.host,
-        port: settings.port,
-        username: settings.username,
-        version: settings.version // now set to "1.20.1"
-    });
+    host: settings.server.host,
+    port: settings.server.port,
+    username: settings.account.username,
+    version: settings.server.version //Should be set to a compatible version with current mineflayer in settings.json
+});
+
 
     diagnostics.attachBot(bot);
 
